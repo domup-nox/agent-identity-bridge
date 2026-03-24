@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIB — Agent Identity Bridge</title>
+<meta name="description" content="One identity. Every protocol. Full audit trail. Portable identity for AI agents across MCP, A2A, ANP.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#07080C;--bg2:#0D0F15;--bg3:#13161F;
+--text:#E4E7F0;--text2:#8B90A3;--text3:#555A6E;
+--accent:#00E5A0;--accent2:#00C5FF;--accent3:#7B61FF;
+--glow:rgba(0,229,160,.12);--glow2:rgba(0,197,255,.1);
+--border:#1E2233;
+--font-display:'JetBrains Mono',monospace;
+--font-body:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;-webkit-font-smoothing:antialiased}
+body{overflow-x:hidden;line-height:1.6}
+
+.grid-bg{
+position:fixed;inset:0;z-index:-1;
+background-image:
+  linear-gradient(var(--border) 1px,transparent 1px),
+  linear-gradient(90deg,var(--border) 1px,transparent 1px);
+background-size:60px 60px;
+mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,black,transparent);
+}
+.glow-orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:-1}
+.glow-orb.g1{width:600px;height:600px;top:-200px;left:-100px;background:rgba(0,229,160,.08)}
+.glow-orb.g2{width:500px;height:500px;top:40%;right:-150px;background:rgba(123,97,255,.07)}
+.glow-orb.g3{width:400px;height:400px;bottom:-100px;left:30%;background:rgba(0,197,255,.06)}
+
+nav{
+position:fixed;top:0;left:0;right:0;z-index:100;
+padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;
+background:rgba(7,8,12,.88);backdrop-filter:blur(20px);
+border-bottom:1px solid var(--border);
+}
+.logo{font-family:var(--font-display);font-size:.95rem;font-weight:700;letter-spacing:2px;color:var(--accent)}
+.logo span{color:var(--text3);font-weight:400}
+.nav-links{display:flex;align-items:center;gap:.3rem}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:.82rem;transition:color .2s;padding:.4rem .8rem;border-radius:4px}
+.nav-links a:hover{color:var(--accent)}
+.nav-cta{border:1px solid var(--accent)!important;color:var(--accent)!important;font-family:var(--font-display);font-size:.7rem!important;letter-spacing:1px;transition:all .2s!important}
+.nav-cta:hover{background:var(--accent)!important;color:var(--bg)!important}
+.lang-btn{
+cursor:pointer;font-family:var(--font-display);font-size:.65rem;letter-spacing:1px;
+padding:.35rem .7rem;border:1px solid var(--border);border-radius:4px;
+background:transparent;color:var(--text2);transition:all .2s;
+}
+.lang-btn:hover,.lang-btn.active{border-color:var(--accent2);color:var(--accent2)}
+
+.hero{
+min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+text-align:center;padding:8rem 2rem 4rem;position:relative;
+}
+.hero-badge{
+font-family:var(--font-display);font-size:.65rem;letter-spacing:3px;text-transform:uppercase;
+color:var(--accent);background:var(--glow);border:1px solid rgba(0,229,160,.2);
+padding:.4rem 1.2rem;border-radius:100px;margin-bottom:2rem;
+animation:fadeInUp .8s ease-out;
+}
+.hero h1{
+font-family:var(--font-display);font-size:clamp(1.8rem,4.5vw,3.6rem);font-weight:700;
+line-height:1.15;letter-spacing:-1px;max-width:780px;
+animation:fadeInUp .8s ease-out .1s both;
+}
+.hero h1 em{font-style:normal;color:var(--accent);position:relative}
+.hero h1 em::after{
+content:'';position:absolute;bottom:-4px;left:0;right:0;height:2px;
+background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.hero-sub{
+font-size:1.15rem;color:var(--text2);max-width:600px;margin:1.5rem auto 0;
+line-height:1.75;font-weight:400;
+animation:fadeInUp .8s ease-out .2s both;
+}
+.hero-actions{display:flex;gap:1rem;margin-top:2.5rem;flex-wrap:wrap;justify-content:center;animation:fadeInUp .8s ease-out .3s both}
+.btn-primary{
+font-family:var(--font-display);font-size:.78rem;letter-spacing:1px;
+padding:.75rem 1.8rem;background:var(--accent);color:var(--bg);border:none;
+border-radius:4px;cursor:pointer;text-decoration:none;font-weight:700;transition:all .2s;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,229,160,.3)}
+.btn-secondary{
+font-family:var(--font-display);font-size:.78rem;letter-spacing:1px;
+padding:.75rem 1.8rem;background:transparent;color:var(--text);border:1px solid var(--border);
+border-radius:4px;cursor:pointer;text-decoration:none;font-weight:400;transition:all .2s;
+}
+.btn-secondary:hover{border-color:var(--text2);transform:translateY(-2px)}
+
+.terminal{
+margin-top:3rem;width:100%;max-width:620px;
+background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+overflow:hidden;text-align:left;animation:fadeInUp .8s ease-out .5s both;
+}
+.terminal-bar{
+padding:.55rem 1rem;background:var(--bg3);border-bottom:1px solid var(--border);
+display:flex;gap:.4rem;align-items:center;
+}
+.terminal-dot{width:8px;height:8px;border-radius:50%}
+.terminal-dot:nth-child(1){background:#FF5F57}
+.terminal-dot:nth-child(2){background:#FFBD2E}
+.terminal-dot:nth-child(3){background:#28CA41}
+.terminal-title{font-family:var(--font-display);font-size:.6rem;color:var(--text3);margin-left:auto}
+.terminal-body{padding:1.1rem;font-family:var(--font-display);font-size:.73rem;line-height:1.9}
+.prompt{color:var(--accent)}
+.cmd{color:var(--text)}
+.output{color:var(--text2)}
+.success{color:var(--accent)}
+.info{color:var(--accent2)}
+
+section{padding:5rem 2rem;max-width:1060px;margin:0 auto}
+section h2{font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:.5rem}
+section h2 span{color:var(--accent)}
+.section-sub{color:var(--text2);font-size:1.05rem;margin-bottom:2.5rem;max-width:600px;line-height:1.65}
+
+.diagram-card{
+background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+padding:2rem;margin:2.5rem 0;overflow:hidden;
+}
+.diagram-card svg{width:100%;height:auto;display:block}
+.diagram-label{
+font-family:var(--font-display);font-size:.65rem;letter-spacing:2px;
+text-transform:uppercase;color:var(--accent2);margin-bottom:1rem;
+}
+
+.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem}
+.problem-card{
+padding:1.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+transition:border-color .3s;
+}
+.problem-card:hover{border-color:var(--text3)}
+.problem-icon{
+width:36px;height:36px;border-radius:8px;
+display:flex;align-items:center;justify-content:center;
+font-family:var(--font-display);font-size:.9rem;font-weight:700;margin-bottom:.8rem;
+}
+.problem-icon.red{background:rgba(255,95,87,.12);color:#FF5F57}
+.problem-icon.orange{background:rgba(255,189,46,.12);color:#FFBD2E}
+.problem-icon.purple{background:rgba(123,97,255,.12);color:#7B61FF}
+.problem-card h3{font-size:1.05rem;font-weight:600;margin-bottom:.5rem}
+.problem-card p{color:var(--text2);font-size:.92rem;line-height:1.65}
+
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem}
+.feature{
+padding:1.4rem;background:var(--bg2);border:1px solid var(--border);
+border-radius:8px;transition:transform .2s,border-color .3s;
+}
+.feature:hover{transform:translateY(-3px);border-color:var(--accent)}
+.feature-tag{
+font-family:var(--font-display);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;
+color:var(--accent);margin-bottom:.7rem;
+}
+.feature h3{font-size:1rem;font-weight:600;margin-bottom:.4rem}
+.feature p{color:var(--text2);font-size:.88rem;line-height:1.55}
+
+.code-section{
+background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+overflow:hidden;margin:2rem 0;
+}
+.code-tabs{display:flex;border-bottom:1px solid var(--border)}
+.code-tab{
+padding:.65rem 1.1rem;font-family:var(--font-display);font-size:.68rem;
+letter-spacing:1px;color:var(--text3);cursor:pointer;transition:color .2s;
+border-bottom:2px solid transparent;
+}
+.code-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.code-block{
+padding:1.3rem;font-family:var(--font-display);font-size:.73rem;
+line-height:1.7;overflow-x:auto;white-space:pre;display:none;
+}
+.code-block.active{display:block}
+.k{color:var(--accent2)}.s{color:var(--accent)}.c{color:var(--text3)}.n{color:var(--text)}.f{color:#FFBD2E}
+
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.3rem;margin-top:2rem}
+.price-card{
+padding:1.8rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+position:relative;transition:border-color .3s;
+}
+.price-card.featured{border-color:var(--accent)}
+.price-card.featured::before{
+content:attr(data-badge);position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+font-family:var(--font-display);font-size:.52rem;letter-spacing:2px;
+padding:.2rem .8rem;background:var(--accent);color:var(--bg);border-radius:100px;
+}
+.price-card h3{font-family:var(--font-display);font-size:.85rem;letter-spacing:1px;margin-bottom:.4rem}
+.price-amount{font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--accent);margin:.7rem 0}
+.price-amount span{font-size:.75rem;color:var(--text3);font-weight:400}
+.price-features{list-style:none;margin-top:.8rem}
+.price-features li{
+padding:.45rem 0;font-size:.9rem;color:var(--text2);
+border-bottom:1px solid rgba(30,34,51,.5);
+display:flex;align-items:center;gap:.5rem;
+}
+.price-features li::before{content:'>';font-family:var(--font-display);color:var(--accent);font-size:.65rem}
+
+.cta-section{
+text-align:center;padding:5rem 2rem;
+background:linear-gradient(180deg,transparent,rgba(0,229,160,.03));
+border-top:1px solid var(--border);
+}
+.cta-section h2{font-family:var(--font-display);font-size:1.6rem;margin-bottom:.7rem}
+.cta-section p{color:var(--text2);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto}
+
+footer{
+padding:1.5rem 2rem;text-align:center;border-top:1px solid var(--border);
+font-size:.75rem;color:var(--text3);
+}
+footer a{color:var(--text2);text-decoration:none}
+footer a:hover{color:var(--accent)}
+
+[data-lang]{display:none!important}
+[data-lang].show{display:revert!important}
+li[data-lang].show{display:flex!important}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(25px);transition:all .6s ease-out}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+nav{padding:.8rem 1rem}
+.nav-links a:not(.nav-cta):not(.lang-btn){display:none}
+.hero{padding:7rem 1.5rem 3rem}
+.hero h1{font-size:1.6rem}
+section{padding:3.5rem 1.5rem}
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="glow-orb g1"></div>
+<div class="glow-orb g2"></div>
+<div class="glow-orb g3"></div>
+
+<nav>
+  <div class="logo">AIB <span>// agent identity bridge</span></div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#how">Architecture</a>
+    <a href="#pricing">Pricing</a>
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+    <button class="lang-btn" onclick="setLang('fr')" id="btn-fr">FR</button>
+    <a href="https://github.com/tntech-consulting/agent-identity-bridge" class="nav-cta" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- ════════════════ HERO ════════════════ -->
+<section class="hero">
+  <div class="hero-badge">Open protocol — Apache 2.0</div>
+
+  <h1 data-lang="en" class="show">One identity.<br><em>Every protocol.</em><br>Full audit trail.</h1>
+  <h1 data-lang="fr">Une identit&eacute;.<br><em>Tous les protocoles.</em><br>Tra&ccedil;abilit&eacute; totale.</h1>
+
+  <p class="hero-sub" data-lang="en" class="show">AIB gives your AI agents a single portable identity across MCP, A2A, ANP &amp; AG-UI &mdash; the four layers of the 2026 AI communication stack.</p>
+  <p class="hero-sub" data-lang="fr">AIB donne &agrave; vos agents IA une identit&eacute; portable unique &agrave; travers MCP, A2A, ANP et AG-UI &mdash; les quatre couches de la communication IA en 2026.</p>
+
+  <div class="hero-actions">
+    <a href="https://github.com/tntech-consulting/agent-identity-bridge" class="btn-primary" target="_blank">&gt; pip install aib</a>
+    <a href="#how" class="btn-secondary" data-lang="en" class="show">Read the spec</a>
+    <a href="#how" class="btn-secondary" data-lang="fr">Lire la spec</a>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+      <div class="terminal-title">aib-gateway v0.1.0</div>
+    </div>
+    <div class="terminal-body">
+      <div><span class="prompt">$</span> <span class="cmd">aib create --org tntech --agent booking --protocols mcp,a2a</span></div>
+      <div class="success">&#x2713; Passport created: urn:aib:agent:tntech:booking</div>
+      <div class="output">&nbsp;&nbsp;Protocols: mcp, a2a &nbsp;|&nbsp; Expires: 2027-03-24</div>
+      <div style="height:.6rem"></div>
+      <div><span class="prompt">$</span> <span class="cmd">aib translate --from a2a --to mcp --source agent-card.json</span></div>
+      <div class="success">&#x2713; Translated: Agent Card &rarr; MCP Server Card (3 skills &rarr; 3 tools)</div>
+      <div style="height:.6rem"></div>
+      <div><span class="prompt">$</span> <span class="cmd">aib gateway --passport urn:aib:agent:tntech:booking --url https://api.partner.com/a2a</span></div>
+      <div class="success">&#x2713; Proxied via A2A | 200 OK | 142ms</div>
+      <div class="info">&nbsp;&nbsp;Audit trace: 7f3a...b2c1</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ DIAGRAM 1 : LANDSCAPE ════════════════ -->
+<section>
+  <h2 data-lang="en" class="show">The protocol <span>landscape</span> in 2026</h2>
+  <h2 data-lang="fr">Le paysage des <span>protocoles</span> en 2026</h2>
+  <p class="section-sub" data-lang="en" class="show">Four layers, four protocols, zero shared identity. Each invented its own authentication.</p>
+  <p class="section-sub" data-lang="fr">Quatre couches, quatre protocoles, z&eacute;ro identit&eacute; partag&eacute;e. Chacun a invent&eacute; sa propre authentification.</p>
+
+  <div class="diagram-card reveal">
+    <div class="diagram-label" data-lang="en" class="show">Protocol stack &mdash; fragmented identity</div>
+    <div class="diagram-label" data-lang="fr">Pile protocolaire &mdash; identit&eacute; fragment&eacute;e</div>
+    <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+      <!-- Layer boxes -->
+      <rect x="40" y="20" width="440" height="60" rx="8" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+      <rect x="40" y="100" width="440" height="60" rx="8" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+      <rect x="40" y="180" width="440" height="60" rx="8" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+      <rect x="40" y="260" width="440" height="60" rx="8" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+
+      <!-- Protocol labels -->
+      <rect x="55" y="32" width="110" height="36" rx="6" fill="rgba(0,229,160,.12)" stroke="rgba(0,229,160,.3)" stroke-width="1"/>
+      <text x="110" y="55" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#00E5A0" font-weight="700">MCP</text>
+
+      <rect x="55" y="112" width="110" height="36" rx="6" fill="rgba(123,97,255,.12)" stroke="rgba(123,97,255,.3)" stroke-width="1"/>
+      <text x="110" y="135" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#7B61FF" font-weight="700">A2A</text>
+
+      <rect x="55" y="192" width="110" height="36" rx="6" fill="rgba(0,197,255,.12)" stroke="rgba(0,197,255,.3)" stroke-width="1"/>
+      <text x="110" y="215" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#00C5FF" font-weight="700">ANP</text>
+
+      <rect x="55" y="272" width="110" height="36" rx="6" fill="rgba(255,189,46,.12)" stroke="rgba(255,189,46,.3)" stroke-width="1"/>
+      <text x="110" y="295" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#FFBD2E" font-weight="700">AG-UI</text>
+
+      <!-- Descriptions -->
+      <text x="185" y="46" font-family="Outfit,sans-serif" font-size="11" fill="#8B90A3">Agent &rarr; Tool</text>
+      <text x="185" y="60" font-family="Outfit,sans-serif" font-size="10" fill="#555A6E">OAuth 2.1 / Server Card</text>
+
+      <text x="185" y="126" font-family="Outfit,sans-serif" font-size="11" fill="#8B90A3">Agent &rarr; Agent</text>
+      <text x="185" y="140" font-family="Outfit,sans-serif" font-size="10" fill="#555A6E">Agent Card / JSON-RPC</text>
+
+      <text x="185" y="206" font-family="Outfit,sans-serif" font-size="11" fill="#8B90A3">Decentralized network</text>
+      <text x="185" y="220" font-family="Outfit,sans-serif" font-size="10" fill="#555A6E">W3C DID / E2E crypto</text>
+
+      <text x="185" y="286" font-family="Outfit,sans-serif" font-size="11" fill="#8B90A3">Agent &rarr; Human</text>
+      <text x="185" y="300" font-family="Outfit,sans-serif" font-size="10" fill="#555A6E">No identity standard</text>
+
+      <!-- Auth silos (right side) -->
+      <rect x="400" y="32" width="65" height="36" rx="4" fill="none" stroke="#FF5F57" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="432" y="53" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#FF5F57">AUTH 1</text>
+      <rect x="400" y="112" width="65" height="36" rx="4" fill="none" stroke="#FF5F57" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="432" y="133" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#FF5F57">AUTH 2</text>
+      <rect x="400" y="192" width="65" height="36" rx="4" fill="none" stroke="#FF5F57" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="432" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#FF5F57">AUTH 3</text>
+      <rect x="400" y="272" width="65" height="36" rx="4" fill="none" stroke="#FF5F57" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="432" y="293" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#FF5F57">NONE</text>
+
+      <!-- Gap zone -->
+      <rect x="510" y="20" width="170" height="300" rx="10" fill="none" stroke="#FF5F57" stroke-width="1.5" stroke-dasharray="8 5" opacity=".6"/>
+      <text x="595" y="130" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#FF5F57" letter-spacing="1">NO LINK</text>
+      <text x="595" y="150" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#FF5F57" letter-spacing="1">BETWEEN</text>
+      <text x="595" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#FF5F57" letter-spacing="1">IDENTITIES</text>
+
+      <!-- Dashed lines showing disconnection -->
+      <line x1="465" y1="50" x2="510" y2="50" stroke="#FF5F57" stroke-width=".8" stroke-dasharray="3 4" opacity=".4"/>
+      <line x1="465" y1="130" x2="510" y2="130" stroke="#FF5F57" stroke-width=".8" stroke-dasharray="3 4" opacity=".4"/>
+      <line x1="465" y1="210" x2="510" y2="210" stroke="#FF5F57" stroke-width=".8" stroke-dasharray="3 4" opacity=".4"/>
+      <line x1="465" y1="290" x2="510" y2="290" stroke="#FF5F57" stroke-width=".8" stroke-dasharray="3 4" opacity=".4"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ════════════════ PROBLEM ════════════════ -->
+<section id="problem">
+  <h2 data-lang="en" class="show">The <span>identity</span> problem</h2>
+  <h2 data-lang="fr">Le probl&egrave;me d'<span>identit&eacute;</span></h2>
+  <p class="section-sub" data-lang="en" class="show">Your agents manage N credentials with zero cross-protocol visibility.</p>
+  <p class="section-sub" data-lang="fr">Vos agents g&egrave;rent N credentials sans aucune visibilit&eacute; cross-protocole.</p>
+
+  <div class="problem-grid">
+    <div class="problem-card reveal">
+      <div class="problem-icon red">N</div>
+      <h3 data-lang="en" class="show">N identities per agent</h3>
+      <h3 data-lang="fr">N identit&eacute;s par agent</h3>
+      <p data-lang="en" class="show">MCP uses OAuth. A2A uses Agent Cards. ANP uses W3C DIDs. AG-UI has nothing. Same agent, different identity everywhere.</p>
+      <p data-lang="fr">MCP utilise OAuth. A2A utilise des Agent Cards. ANP utilise des DID W3C. AG-UI n'a rien. M&ecirc;me agent, identit&eacute; diff&eacute;rente partout.</p>
+    </div>
+    <div class="problem-card reveal">
+      <div class="problem-icon orange">0</div>
+      <h3 data-lang="en" class="show">Zero cross-protocol audit</h3>
+      <h3 data-lang="fr">Z&eacute;ro audit cross-protocole</h3>
+      <p data-lang="en" class="show">When your agent calls a tool via MCP, then delegates via A2A &mdash; the trace breaks. No correlation. No compliance.</p>
+      <p data-lang="fr">Quand votre agent appelle un outil via MCP puis d&eacute;l&egrave;gue via A2A &mdash; la trace se brise. Pas de corr&eacute;lation. Pas de conformit&eacute;.</p>
+    </div>
+    <div class="problem-card reveal">
+      <div class="problem-icon purple">!</div>
+      <h3 data-lang="en" class="show">No universal revocation</h3>
+      <h3 data-lang="fr">Pas de r&eacute;vocation universelle</h3>
+      <p data-lang="en" class="show">Revoking an agent means revoking in MCP, then A2A, then ANP &mdash; separately. Miss one and the agent persists.</p>
+      <p data-lang="fr">R&eacute;voquer un agent = le r&eacute;voquer dans MCP, puis A2A, puis ANP &mdash; s&eacute;par&eacute;ment. Un oubli et l'agent persiste.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ DIAGRAM 2: HOW AIB WORKS ════════════════ -->
+<section id="how">
+  <h2 data-lang="en" class="show">How <span>AIB</span> bridges everything</h2>
+  <h2 data-lang="fr">Comment <span>AIB</span> relie tout</h2>
+  <p class="section-sub" data-lang="en" class="show">A bridge, not a replacement. AIB sits between your agents and every protocol.</p>
+  <p class="section-sub" data-lang="fr">Un pont, pas un remplacement. AIB s'ins&egrave;re entre vos agents et chaque protocole.</p>
+
+  <div class="diagram-card reveal">
+    <div class="diagram-label" data-lang="en" class="show">Architecture &mdash; gateway + passport + audit</div>
+    <div class="diagram-label" data-lang="fr">Architecture &mdash; gateway + passeport + audit</div>
+    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#00E5A0" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arrowB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#00C5FF" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- Your Agent (left) -->
+      <rect x="30" y="100" width="130" height="100" rx="10" fill="#0f1923" stroke="#1E2233" stroke-width="1.5"/>
+      <text x="95" y="140" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#E4E7F0" font-weight="700">Your Agent</text>
+      <text x="95" y="158" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">1 passport</text>
+      <text x="95" y="173" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">N capabilities</text>
+
+      <!-- Arrow: Agent -> AIB -->
+      <line x1="160" y1="150" x2="230" y2="150" stroke="#00E5A0" stroke-width="1.5" marker-end="url(#arrowG)"/>
+
+      <!-- AIB Gateway (center, highlighted) -->
+      <rect x="235" y="35" width="210" height="230" rx="12" fill="rgba(0,229,160,.04)" stroke="rgba(0,229,160,.3)" stroke-width="1.5"/>
+      <text x="340" y="62" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" fill="#00E5A0" font-weight="700">AIB GATEWAY</text>
+
+      <!-- Sub-modules -->
+      <rect x="255" y="78" width="170" height="32" rx="5" fill="rgba(0,229,160,.08)" stroke="rgba(0,229,160,.15)" stroke-width=".8"/>
+      <text x="340" y="98" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#00E5A0">Agent Passport</text>
+
+      <rect x="255" y="120" width="170" height="32" rx="5" fill="rgba(0,197,255,.08)" stroke="rgba(0,197,255,.15)" stroke-width=".8"/>
+      <text x="340" y="140" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#00C5FF">Credential Translator</text>
+
+      <rect x="255" y="162" width="170" height="32" rx="5" fill="rgba(123,97,255,.08)" stroke="rgba(123,97,255,.15)" stroke-width=".8"/>
+      <text x="340" y="182" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#7B61FF">Protocol Router</text>
+
+      <rect x="255" y="204" width="170" height="32" rx="5" fill="rgba(255,189,46,.08)" stroke="rgba(255,189,46,.15)" stroke-width=".8"/>
+      <text x="340" y="224" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#FFBD2E">Audit Trail (OTLP)</text>
+
+      <!-- Arrows: AIB -> Protocols -->
+      <line x1="445" y1="94" x2="520" y2="74" stroke="#00E5A0" stroke-width="1" marker-end="url(#arrowG)"/>
+      <line x1="445" y1="150" x2="520" y2="150" stroke="#00C5FF" stroke-width="1" marker-end="url(#arrowB)"/>
+      <line x1="445" y1="210" x2="520" y2="226" stroke="#00E5A0" stroke-width="1" marker-end="url(#arrowG)"/>
+
+      <!-- Protocol targets (right) -->
+      <rect x="525" y="50" width="140" height="46" rx="7" fill="#0f1923" stroke="rgba(0,229,160,.3)" stroke-width="1"/>
+      <text x="595" y="70" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#00E5A0">MCP Server</text>
+      <text x="595" y="84" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#555A6E">OAuth injected</text>
+
+      <rect x="525" y="127" width="140" height="46" rx="7" fill="#0f1923" stroke="rgba(123,97,255,.3)" stroke-width="1"/>
+      <text x="595" y="147" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#7B61FF">A2A Agent</text>
+      <text x="595" y="161" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#555A6E">Agent Card matched</text>
+
+      <rect x="525" y="204" width="140" height="46" rx="7" fill="#0f1923" stroke="rgba(0,197,255,.3)" stroke-width="1"/>
+      <text x="595" y="224" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#00C5FF">ANP Peer</text>
+      <text x="595" y="238" text-anchor="middle" font-family="Outfit,sans-serif" font-size="8" fill="#555A6E">DID resolved</text>
+    </svg>
+  </div>
+
+  <!-- Features grid -->
+  <div class="features-grid">
+    <div class="feature reveal">
+      <div class="feature-tag">Identity</div>
+      <h3 data-lang="en" class="show">Agent Passport</h3>
+      <h3 data-lang="fr">Agent Passport</h3>
+      <p data-lang="en" class="show">JWS-signed JSON binding one agent to credentials for every protocol. Create, verify, revoke.</p>
+      <p data-lang="fr">Document JSON sign&eacute; (JWS) liant un agent &agrave; ses credentials pour chaque protocole.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-tag">Translation</div>
+      <h3 data-lang="en" class="show">Credential translator</h3>
+      <h3 data-lang="fr">Traducteur de credentials</h3>
+      <p data-lang="en" class="show">Converts between A2A Agent Cards, MCP Server Cards, and DID Documents. Round-trip safe.</p>
+      <p data-lang="fr">Convertit entre Agent Cards A2A, Server Cards MCP et DID Documents. Aller-retour garanti.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-tag">Proxy</div>
+      <h3 data-lang="en" class="show">Protocol-aware gateway</h3>
+      <h3 data-lang="fr">Gateway multi-protocole</h3>
+      <p data-lang="en" class="show">Reverse proxy that detects the target protocol, injects credentials, wraps in JSON-RPC 2.0.</p>
+      <p data-lang="fr">Reverse proxy qui d&eacute;tecte le protocole cible, injecte les credentials, emballe en JSON-RPC.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-tag">Observability</div>
+      <h3 data-lang="en" class="show">Unified audit trail</h3>
+      <h3 data-lang="fr">Audit trail unifi&eacute;</h3>
+      <p data-lang="en" class="show">OpenTelemetry spans across MCP + A2A + ANP. Export to Jaeger, Grafana, Datadog.</p>
+      <p data-lang="fr">Traces OpenTelemetry &agrave; travers MCP + A2A + ANP. Export vers Jaeger, Grafana, Datadog.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ DIAGRAM 3: PASSPORT STRUCTURE ════════════════ -->
+<section>
+  <h2 data-lang="en" class="show">Inside an <span>Agent Passport</span></h2>
+  <h2 data-lang="fr">Anatomie d'un <span>Agent Passport</span></h2>
+  <p class="section-sub" data-lang="en" class="show">One signed document. Every protocol binding. Full lifecycle management.</p>
+  <p class="section-sub" data-lang="fr">Un document sign&eacute;. Tous les bindings protocole. Gestion compl&egrave;te du cycle de vie.</p>
+
+  <div class="diagram-card reveal">
+    <div class="diagram-label" data-lang="en" class="show">Agent Passport structure (JWS RS256)</div>
+    <div class="diagram-label" data-lang="fr">Structure du Agent Passport (JWS RS256)</div>
+    <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+      <!-- Passport outer frame -->
+      <rect x="40" y="20" width="620" height="320" rx="14" fill="rgba(0,229,160,.03)" stroke="rgba(0,229,160,.2)" stroke-width="1.5"/>
+      <text x="60" y="50" font-family="JetBrains Mono,monospace" font-size="13" fill="#00E5A0" font-weight="700">AGENT PASSPORT</text>
+      <text x="560" y="50" font-family="JetBrains Mono,monospace" font-size="9" fill="#555A6E">JWS signed</text>
+
+      <!-- Identity block -->
+      <rect x="60" y="68" width="260" height="80" rx="6" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+      <text x="75" y="88" font-family="JetBrains Mono,monospace" font-size="9" fill="#00E5A0" letter-spacing="1">IDENTITY</text>
+      <text x="75" y="108" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">passport_id: urn:aib:agent:org:name</text>
+      <text x="75" y="124" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">issuer: urn:aib:org:tntech</text>
+      <text x="75" y="140" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">capabilities: [booking, search]</text>
+
+      <!-- Lifecycle block -->
+      <rect x="340" y="68" width="300" height="80" rx="6" fill="#0f1923" stroke="#1E2233" stroke-width="1"/>
+      <text x="355" y="88" font-family="JetBrains Mono,monospace" font-size="9" fill="#FFBD2E" letter-spacing="1">LIFECYCLE</text>
+      <text x="355" y="108" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">issued_at: 2026-03-24T10:00:00Z</text>
+      <text x="355" y="124" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">expires_at: 2027-03-24T10:00:00Z</text>
+      <text x="355" y="140" font-family="Outfit,sans-serif" font-size="10" fill="#8B90A3">revocation_endpoint: /revoke</text>
+
+      <!-- Protocol bindings -->
+      <text x="60" y="175" font-family="JetBrains Mono,monospace" font-size="9" fill="#7B61FF" letter-spacing="1">PROTOCOL BINDINGS</text>
+
+      <!-- MCP binding -->
+      <rect x="60" y="190" width="190" height="65" rx="6" fill="#0f1923" stroke="rgba(0,229,160,.25)" stroke-width="1"/>
+      <text x="75" y="210" font-family="JetBrains Mono,monospace" font-size="10" fill="#00E5A0">mcp:</text>
+      <text x="75" y="226" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">server_card_url: /.well-known</text>
+      <text x="75" y="242" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">auth: oauth2 | scopes: [r,w]</text>
+
+      <!-- A2A binding -->
+      <rect x="265" y="190" width="190" height="65" rx="6" fill="#0f1923" stroke="rgba(123,97,255,.25)" stroke-width="1"/>
+      <text x="280" y="210" font-family="JetBrains Mono,monospace" font-size="10" fill="#7B61FF">a2a:</text>
+      <text x="280" y="226" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">agent_card_url: /agent.json</text>
+      <text x="280" y="242" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">auth: bearer | skills: [...]</text>
+
+      <!-- ANP binding -->
+      <rect x="470" y="190" width="170" height="65" rx="6" fill="#0f1923" stroke="rgba(0,197,255,.25)" stroke-width="1"/>
+      <text x="485" y="210" font-family="JetBrains Mono,monospace" font-size="10" fill="#00C5FF">anp:</text>
+      <text x="485" y="226" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">did: did:web:domain</text>
+      <text x="485" y="242" font-family="Outfit,sans-serif" font-size="9" fill="#555A6E">auth: did-auth</text>
+
+      <!-- Audit + metadata -->
+      <rect x="60" y="275" width="580" height="48" rx="6" fill="#0f1923" stroke="rgba(255,189,46,.2)" stroke-width="1"/>
+      <text x="75" y="295" font-family="JetBrains Mono,monospace" font-size="9" fill="#FFBD2E" letter-spacing="1">AUDIT &amp; METADATA</text>
+      <text x="75" y="313" font-family="Outfit,sans-serif" font-size="10" fill="#555A6E">audit_endpoint: /audit &nbsp; | &nbsp; metadata: { env: production, region: eu-west-1 }</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ════════════════ CODE ════════════════ -->
+<section>
+  <h2 data-lang="en" class="show">Get <span>started</span> in minutes</h2>
+  <h2 data-lang="fr">D&eacute;marrez en <span>quelques minutes</span></h2>
+  <p class="section-sub" data-lang="en" class="show">Python. FastAPI. Docker. No exotic dependencies.</p>
+  <p class="section-sub" data-lang="fr">Python. FastAPI. Docker. Aucune d&eacute;pendance exotique.</p>
+
+  <div class="code-section reveal">
+    <div class="code-tabs">
+      <div class="code-tab active" onclick="showTab(0)">Passport</div>
+      <div class="code-tab" onclick="showTab(1)">Translate</div>
+      <div class="code-tab" onclick="showTab(2)">Gateway</div>
+    </div>
+    <div class="code-block active"><span class="c"># Create an Agent Passport</span>
+<span class="k">from</span> <span class="n">aib.passport</span> <span class="k">import</span> <span class="n">PassportService, McpBinding, A2aBinding</span>
+
+<span class="n">svc</span> = <span class="f">PassportService</span>(<span class="n">secret_key</span>=<span class="s">"your-secret"</span>)
+
+<span class="n">passport, token</span> = <span class="n">svc</span>.<span class="f">create_passport</span>(
+    <span class="n">org_slug</span>=<span class="s">"mycompany"</span>,
+    <span class="n">agent_slug</span>=<span class="s">"booking-agent"</span>,
+    <span class="n">capabilities</span>=[<span class="s">"booking"</span>, <span class="s">"scheduling"</span>],
+    <span class="n">bindings</span>={
+        <span class="s">"mcp"</span>: <span class="f">McpBinding</span>(<span class="n">auth_method</span>=<span class="s">"oauth2"</span>, ...),
+        <span class="s">"a2a"</span>: <span class="f">A2aBinding</span>(<span class="n">auth_method</span>=<span class="s">"bearer"</span>, ...),
+    },
+)
+<span class="c"># Verify anytime</span>
+<span class="n">valid, _, reason</span> = <span class="n">svc</span>.<span class="f">verify_passport</span>(<span class="n">token</span>)</div>
+    <div class="code-block"><span class="c"># Translate A2A Agent Card to MCP Server Card</span>
+<span class="k">from</span> <span class="n">aib.translator</span> <span class="k">import</span> <span class="n">CredentialTranslator</span>
+
+<span class="n">t</span> = <span class="f">CredentialTranslator</span>()
+
+<span class="n">mcp_card</span> = <span class="n">t</span>.<span class="f">translate</span>(
+    <span class="n">source</span>=<span class="n">a2a_agent_card</span>,
+    <span class="n">from_format</span>=<span class="s">"a2a_agent_card"</span>,
+    <span class="n">to_format</span>=<span class="s">"mcp_server_card"</span>,
+)
+<span class="c"># Also: mcp -> a2a, a2a -> did, did -> a2a</span></div>
+    <div class="code-block"><span class="c"># Proxy with auto credential injection</span>
+<span class="k">import</span> <span class="n">httpx</span>
+
+<span class="n">r</span> = <span class="n">httpx</span>.<span class="f">post</span>(<span class="s">"http://localhost:8420/gateway/proxy"</span>, <span class="n">json</span>={
+    <span class="s">"passport_id"</span>: <span class="s">"urn:aib:agent:myco:booking"</span>,
+    <span class="s">"target_url"</span>: <span class="s">"https://partner.com/a2a/send"</span>,
+    <span class="s">"body"</span>: {<span class="s">"task"</span>: <span class="s">"Book 3pm tomorrow"</span>},
+})
+
+<span class="n">trace_id</span> = <span class="n">r</span>.<span class="f">json</span>()[<span class="s">"audit_trace_id"</span>]
+<span class="n">protocol</span> = <span class="n">r</span>.<span class="f">json</span>()[<span class="s">"protocol_used"</span>]  <span class="c"># "a2a"</span></div>
+  </div>
+</section>
+
+<!-- ════════════════ PRICING ════════════════ -->
+<section id="pricing">
+  <h2 data-lang="en" class="show">Open core <span>pricing</span></h2>
+  <h2 data-lang="fr">Tarification <span>open core</span></h2>
+  <p class="section-sub" data-lang="en" class="show">The protocol is free forever. Pay only for managed infrastructure.</p>
+  <p class="section-sub" data-lang="fr">Le protocole est gratuit pour toujours. Payez uniquement l'infrastructure manag&eacute;e.</p>
+
+  <div class="pricing-grid">
+    <div class="price-card reveal">
+      <h3>Community</h3>
+      <div class="price-amount">0&euro;</div>
+      <ul class="price-features">
+        <li data-lang="en" class="show">Self-hosted gateway</li><li data-lang="fr">Gateway self-hosted</li>
+        <li data-lang="en" class="show">MCP + A2A translation</li><li data-lang="fr">Traduction MCP + A2A</li>
+        <li data-lang="en" class="show">1,000 tx/month</li><li data-lang="fr">1 000 tx/mois</li>
+        <li data-lang="en" class="show">7-day audit retention</li><li data-lang="fr">R&eacute;tention audit 7 jours</li>
+        <li>CLI</li>
+      </ul>
+    </div>
+    <div class="price-card featured reveal" data-badge="RECOMMENDED">
+      <h3>Pro</h3>
+      <div class="price-amount">99&euro; <span>/mois</span></div>
+      <ul class="price-features">
+        <li data-lang="en" class="show">Managed cloud gateway</li><li data-lang="fr">Gateway cloud manag&eacute;</li>
+        <li>MCP + A2A + ANP</li>
+        <li data-lang="en" class="show">100K tx/month</li><li data-lang="fr">100K tx/mois</li>
+        <li data-lang="en" class="show">90-day audit + dashboard</li><li data-lang="fr">Audit 90j + dashboard</li>
+        <li data-lang="en" class="show">Email support 48h</li><li data-lang="fr">Support email 48h</li>
+      </ul>
+    </div>
+    <div class="price-card reveal">
+      <h3>Enterprise</h3>
+      <div class="price-amount" data-lang="en" class="show">Custom</div>
+      <div class="price-amount" data-lang="fr">Sur devis</div>
+      <ul class="price-features">
+        <li data-lang="en" class="show">Dedicated infra</li><li data-lang="fr">Infra d&eacute;di&eacute;e</li>
+        <li data-lang="en" class="show">All protocols + custom</li><li data-lang="fr">Tous protocoles + custom</li>
+        <li data-lang="en" class="show">Unlimited tx</li><li data-lang="fr">Transactions illimit&eacute;es</li>
+        <li>SIEM + SSO/SAML</li>
+        <li data-lang="en" class="show">SLA + dedicated support</li><li data-lang="fr">SLA + support d&eacute;di&eacute;</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ CTA ════════════════ -->
+<section class="cta-section">
+  <h2 data-lang="en" class="show">Build the identity layer <span>agents need</span></h2>
+  <h2 data-lang="fr">Construisez la couche d'identit&eacute; <span>que les agents attendent</span></h2>
+  <p data-lang="en" class="show">AIB is open source. The protocol belongs to everyone.</p>
+  <p data-lang="fr">AIB est open source. Le protocole appartient &agrave; tous.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <a href="https://github.com/tntech-consulting/agent-identity-bridge" class="btn-primary" target="_blank">&gt; Star on GitHub</a>
+    <a href="#how" class="btn-secondary" data-lang="en" class="show">Read the spec</a>
+    <a href="#how" class="btn-secondary" data-lang="fr">Lire la spec</a>
+  </div>
+</section>
+
+<footer>
+  <p><a href="https://tntech.fr" target="_blank">TNTECH CONSULTING SAS</a> &bull; Apache 2.0 &bull; Built for the agentic era</p>
+</footer>
+
+<script>
+function showTab(i){
+  document.querySelectorAll('.code-tab').forEach(function(t,j){t.classList.toggle('active',j===i)});
+  document.querySelectorAll('.code-block').forEach(function(b,j){b.classList.toggle('active',j===i)});
+}
+
+function setLang(lang){
+  document.querySelectorAll('[data-lang]').forEach(function(el){
+    el.classList.toggle('show', el.getAttribute('data-lang')===lang);
+  });
+  document.getElementById('btn-en').classList.toggle('active', lang==='en');
+  document.getElementById('btn-fr').classList.toggle('active', lang==='fr');
+}
+
+var observer = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}
+  });
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){observer.observe(el)});
+</script>
+</body>
+</html>
+<!-- AIB v3.0 -->

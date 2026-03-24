@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-identity-bridge"
+version = "0.1.0"
+description = "Portable identity for AI agents across MCP, A2A, ANP, and AG-UI protocols"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Thomas Nirennold", email = "thomas@tntech.fr"},
+]
+keywords = ["ai", "agents", "identity", "mcp", "a2a", "protocol", "bridge"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Security",
+]
+
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.6.0",
+]
+
+[project.optional-dependencies]
+vault = ["cryptography>=42.0", "PyJWT>=2.8"]
+telemetry = ["opentelemetry-sdk>=1.22", "opentelemetry-exporter-otlp>=1.22"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.3.0",
+]
+all = ["agent-identity-bridge[vault,telemetry,dev]"]
+
+[project.urls]
+Homepage = "https://agent-identity-bridge.netlify.app"
+Repository = "https://github.com/tntech-consulting/agent-identity-bridge"
+Documentation = "https://agent-identity-bridge.netlify.app"
+
+[project.scripts]
+aib = "aib.main:app"
+
+[tool.setuptools.packages.find]
+include = ["aib*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

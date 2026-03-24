@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aib.tntech.fr/schemas/passport-v0.1.json",
+  "title": "AIB Agent Passport",
+  "description": "Portable identity document for AI agents across MCP, A2A, ANP, and AG-UI protocols",
+  "type": "object",
+  "required": ["aib_version", "passport_id", "display_name", "issuer", "issued_at", "expires_at", "capabilities", "protocol_bindings"],
+  "properties": {
+    "aib_version": {
+      "type": "string",
+      "const": "0.1",
+      "description": "AIB specification version"
+    },
+    "passport_id": {
+      "type": "string",
+      "pattern": "^urn:aib:agent:[a-z0-9-]+:[a-z0-9-]+$",
+      "description": "Unique agent identifier (URN format)",
+      "examples": ["urn:aib:agent:tntech:domup-booking"]
+    },
+    "display_name": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Human-readable agent name"
+    },
+    "issuer": {
+      "type": "string",
+      "pattern": "^urn:aib:org:[a-z0-9-]+$",
+      "description": "Organization that issued the passport"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "List of agent capabilities (protocol-agnostic)"
+    },
+    "protocol_bindings": {
+      "type": "object",
+      "description": "Credentials and endpoints for each supported protocol",
+      "properties": {
+        "mcp": { "$ref": "#/$defs/McpBinding" },
+        "a2a": { "$ref": "#/$defs/A2aBinding" },
+        "anp": { "$ref": "#/$defs/AnpBinding" }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "revocation_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to check/trigger passport revocation"
+    },
+    "audit_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL for unified audit trail"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form metadata (tags, environment, region...)",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "McpBinding": {
+      "type": "object",
+      "required": ["server_card_url", "auth_method"],
+      "properties": {
+        "server_card_url": { "type": "string", "format": "uri" },
+        "auth_method": { "type": "string", "enum": ["oauth2", "bearer", "api_key"] },
+        "credential_ref": { "type": "string", "description": "Reference to credential in vault" },
+        "scopes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "A2aBinding": {
+      "type": "object",
+      "required": ["agent_card_url", "auth_method"],
+      "properties": {
+        "agent_card_url": { "type": "string", "format": "uri" },
+        "auth_method": { "type": "string", "enum": ["bearer", "oauth2", "api_key"] },
+        "credential_ref": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AnpBinding": {
+      "type": "object",
+      "required": ["did", "auth_method"],
+      "properties": {
+        "did": { "type": "string", "pattern": "^did:[a-z]+:.+" },
+        "auth_method": { "type": "string", "enum": ["did-auth", "verifiable-presentation"] },
+        "credential_ref": { "type": "string" }
+      }
+    }
+  }
+}

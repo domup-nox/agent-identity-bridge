@@ -1,0 +1,13 @@
+services:
+  aib-gateway:
+    build: .
+    ports:
+      - "8420:8420"
+    environment:
+      - AIB_SECRET_KEY=${AIB_SECRET_KEY:-dev-secret-change-me}
+      - AIB_STORAGE_PATH=/data/passports
+    volumes:
+      - aib-data:/data
+
+volumes:
+  aib-data:
