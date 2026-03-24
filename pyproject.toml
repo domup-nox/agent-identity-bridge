@@ -47,7 +47,7 @@ Repository = "https://github.com/tntech-consulting/agent-identity-bridge"
 Documentation = "https://agent-identity-bridge.netlify.app"
 
 [project.scripts]
-aib = "aib.main:app"
+aib = "aib.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["aib*"]
